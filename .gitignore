@@ -1,0 +1,8 @@
+/*
+!/.gitignore
+!/README.md
+!/server.rb
+!/web/
+!/.github/
+.DS_Store
+*.log

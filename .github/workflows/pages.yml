@@ -1,0 +1,79 @@
+name: Deploy AVIS Six
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out release
+        uses: actions/checkout@v6
+
+      - name: Check release scope and integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            case "$file" in
+              .gitignore|README.md|server.rb|.github/workflows/pages.yml|.github/release-manifest.sha256) ;;
+              web/index.html|web/style.css|web/favicon.svg|web/assets/avis-six-mark.svg|web/assets/avis-six-wordmark.svg|web/src/*.js|web/vendor/*.js|web/vendor/LICENSE.three.txt) ;;
+              *) echo "Unexpected release file: $file" >&2; exit 1 ;;
+            esac
+          done < <(git ls-files -z)
+          test -z "$(find web -type l -print -quit)"
+          sha256sum --check .github/release-manifest.sha256
+          diff -u <(git ls-files web server.rb | sort) <(sed 's/^[0-9a-f]*  //' .github/release-manifest.sha256 | sort)
+
+      - name: Check JavaScript syntax on GitHub runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            node --input-type=module --check < "$file"
+          done < <(find web -type f -name '*.js' -print0)
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload website only
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: web
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Check published resources on GitHub runner
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          while read -r expected file; do
+            [[ "$file" == web/* ]] || continue
+            actual=$(curl --fail --silent --show-error --location --retry 6 --retry-delay 5 --retry-all-errors "${PAGE_URL%/}/${file#web/}" | sha256sum | cut -d ' ' -f 1)
+            if [[ "$actual" != "$expected" ]]; then
+              echo "Published resource mismatch: $file" >&2
+              exit 1
+            fi
+            echo "Verified $file"
+          done < .github/release-manifest.sha256

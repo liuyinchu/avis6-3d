@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#e9edf0">
+  <meta name="description" content="AVIS Six：六自由度六边形悬挂式主动隔振平台交互模型。">
+  <title>AVIS Six · 主动隔振平台 3D 模型</title>
+  <link rel="icon" href="./assets/avis-six-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/"}}</script>
+</head>
+<body>
+<svg class="svg-defs" aria-hidden="true"><defs>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-cube" viewBox="0 0 24 24"><path d="m12 2 9 5v10l-9 5-9-5V7l9-5Zm0 10 9-5M12 12 3 7m9 5v10"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 10 5-10 5L2 8l10-5Zm-9 10 9 5 9-5M3 18l9 5 9-5"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 11a9 9 0 1 1 2.5 7M3 4v7h7"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+  <symbol id="i-focus" viewBox="0 0 24 24"><path d="M3 9V3h6m6 0h6v6M3 15v6h6m6 0h6v-6"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M4 12h16M12 4v16"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M4 12h16"/></symbol>
+</defs></svg>
+<header class="app-header">
+  <a class="brand" href="./" aria-label="AVIS Six 首页">
+    <img class="brand-mark" src="./assets/avis-six-mark.svg" alt="">
+    <img class="brand-wordmark" src="./assets/avis-six-wordmark.svg" alt="AVIS Six">
+  </a>
+  <h1 class="project-name">六自由度六边形悬挂式主动隔振平台可视化 3D 模型</h1>
+  <button id="export-button" class="button primary" aria-label="导出视图"><svg><use href="#i-download"/></svg><span>导出视图</span></button>
+</header>
+<button id="panel-backdrop" class="panel-backdrop" aria-label="关闭部件与设置面板" hidden></button>
+<main class="workspace">
+  <aside class="left-panel" id="left-panel">
+    <div class="panel-heading"><h2>装配结构</h2><button class="drawer-close close-parts" data-close-drawer aria-label="关闭部件面板"><svg><use href="#i-close"/></svg></button></div>
+    <div id="parts-tree" class="parts-tree" aria-label="部件选择与显隐"></div>
+    <div class="left-section">
+      <h3 class="section-heading">观察视角</h3>
+      <div class="view-presets">
+        <button data-view="iso" class="view-preset active" aria-pressed="true"><svg viewBox="0 0 32 32"><path d="m16 5 11 6v12l-11 6-11-6V11l11-6Zm0 12 11-6M16 17 5 11m11 6v12"/></svg>轴测</button>
+        <button data-view="top" class="view-preset" aria-pressed="false"><svg viewBox="0 0 32 32"><path d="m9 5 14 0 7 11-7 11H9L2 16 9 5Z"/><path class="faint" d="M16 6v20M3 16h26"/></svg>俯视</button>
+        <button data-view="front" class="view-preset" aria-pressed="false"><svg viewBox="0 0 32 32"><path d="M4 7h24v18H4zM7 25v3m18-3v3M4 21h24"/><path class="faint" d="M10 7v14m12-14v14"/></svg>正视</button>
+        <button data-view="side" class="view-preset" aria-pressed="false"><svg viewBox="0 0 32 32"><path d="M6 7h20v18H6zM9 25v3m14-3v3M6 21h20"/><path class="faint" d="M16 7v14"/></svg>右视</button>
+      </div>
+    </div>
+  </aside>
+  <section class="viewer-column" aria-label="交互式三维模型">
+    <div class="viewport" id="viewport">
+      <div id="scene" class="scene" tabindex="0" aria-label="三维场景：拖动旋转，滚轮缩放，右键平移"></div>
+      <svg id="callout-lines" class="callout-lines" aria-hidden="true"></svg>
+      <div id="scene-labels" class="scene-labels"></div>
+      <div id="direction-labels" class="direction-labels"></div>
+      <span id="render-status" class="sr-only" role="status">正在创建模型</span>
+      <div class="mode-switch" aria-label="显示模式">
+        <button data-mode="internal" aria-pressed="true" class="active">开盖观察</button>
+        <button data-mode="cutaway" aria-pressed="false" title="移除侧板、上框架与内部隔板，完整展示机电组件">全开放剖视</button>
+        <button data-mode="assembly" aria-pressed="false">完整装配</button>
+        <button data-mode="exploded" aria-pressed="false">分解视图</button>
+      </div>
+      <div id="loading" class="loading"><img src="./assets/avis-six-mark.svg" alt=""><strong>构建三维场景</strong><span>正在加载平台部件…</span></div>
+      <div class="compass" aria-label="平台坐标轴"><svg id="compass-svg" viewBox="0 0 100 100"></svg></div>
+      <div class="axes-key" id="axes-key" hidden><span class="axis-x">X</span><span class="axis-y">Y</span><span class="axis-z">Z</span></div>
+      <div class="viewport-tools">
+        <button id="parts-button" class="parts-toggle" title="部件与视角" aria-label="部件与视角" aria-controls="left-panel" aria-expanded="false"><svg><use href="#i-layers"/></svg></button>
+        <button id="settings-button" class="settings-toggle" title="部件信息与显示设置" aria-label="部件信息与显示设置" aria-controls="right-panel" aria-expanded="false"><svg><use href="#i-eye"/></svg></button>
+        <button id="zoom-out" title="缩小" aria-label="缩小"><svg><use href="#i-minus"/></svg></button>
+        <output id="zoom-value" aria-label="缩放比例">100%</output>
+        <button id="zoom-in" title="放大" aria-label="放大"><svg><use href="#i-plus"/></svg></button>
+        <span class="tool-divider"></span>
+        <button id="fit-button" title="适配当前模型" aria-label="适配视图"><svg><use href="#i-focus"/></svg></button>
+        <button id="rotate-button" title="自动环绕" aria-label="自动环绕" aria-pressed="false"><svg><use href="#i-reset"/></svg></button>
+        <button id="reset-button" title="重置场景" aria-label="重置场景"><svg><use href="#i-cube"/></svg></button>
+      </div>
+    </div>
+    <div class="motion-panel">
+      <div class="motion-header">
+        <h2>六自由度运动</h2>
+        <span id="motion-caption">Z 轴 · 升沉</span>
+        <svg class="motion-wave" viewBox="0 0 124 32" aria-hidden="true"><path d="M2 16C12 16 14 3 24 3S42 29 52 29 70 3 80 3 98 29 108 29 118 16 122 16"/><circle id="wave-dot" cx="2" cy="16" r="3.3"/></svg>
+        <output id="motion-readout">Z  0%</output>
+        <button id="motion-reset" class="text-button">复位</button>
+      </div>
+      <div class="motion-main">
+        <button id="play-button" class="play-button" aria-label="播放运动演示" aria-pressed="false"><svg><use href="#i-play"/></svg><span id="play-label">播放</span></button>
+        <div class="dof-buttons" aria-label="选择运动自由度">
+          <button data-dof="x" aria-pressed="false"><b>X</b><span>横移</span></button>
+          <button data-dof="y" aria-pressed="false"><b>Y</b><span>纵移</span></button>
+          <button data-dof="z" aria-pressed="true" class="active"><b>Z</b><span>升沉</span></button>
+          <button data-dof="rx" aria-pressed="false"><b>R<sub>x</sub></b><span>横滚</span></button>
+          <button data-dof="ry" aria-pressed="false"><b>R<sub>y</sub></b><span>俯仰</span></button>
+          <button data-dof="rz" aria-pressed="false"><b>R<sub>z</sub></b><span>偏航</span></button>
+        </div>
+      </div>
+      <div class="motion-adjustments">
+        <div class="range-control amplitude"><label for="amplitude">运动幅值 <output id="amplitude-value">50%</output></label><input id="amplitude" type="range" min="0" max="100" value="50"></div>
+        <div class="speed-control"><span>播放速度</span><div class="speed-options" aria-label="播放速度"><button data-speed="0.5" aria-pressed="false">0.5×</button><button data-speed="1" class="active" aria-pressed="true">1×</button><button data-speed="2" aria-pressed="false">2×</button></div></div>
+        <div class="range-control phase-control"><label for="phase">姿态相位 <output id="phase-value">0°</output></label><input id="phase" type="range" min="0" max="360" value="0" title="拖动相位可暂停并检查任意姿态"></div>
+      </div>
+    </div>
+  </section>
+  <aside class="right-panel" id="right-panel">
+    <div class="panel-heading"><h2>部件信息</h2><button class="drawer-close close-settings" data-close-drawer aria-label="关闭设置面板"><svg><use href="#i-close"/></svg></button></div>
+    <div id="inspector" class="inspector" aria-live="polite"></div>
+    <div class="right-section">
+      <h3 class="section-heading">可视辅助</h3>
+      <label class="toggle-row"><span><strong>部件标注</strong><small>编号、名称与连接线</small></span><input id="labels-toggle" type="checkbox" checked><span class="switch"></span></label>
+      <label class="toggle-row"><span><strong>坐标与施力方向</strong><small>选中传感器可查看局部坐标</small></span><input id="axes-toggle" type="checkbox"><span class="switch"></span></label>
+      <label class="toggle-row"><span><strong>方向网格</strong><small>辅助判断水平朝向与相对距离</small></span><input id="grid-toggle" type="checkbox"><span class="switch"></span></label>
+    </div>
+    <div class="right-section explode-control">
+      <label for="explode">分解间距 <output id="explode-value">0%</output></label>
+      <input id="explode" type="range" min="0" max="300" step="5" value="0">
+      <div class="range-ends"><span>合拢</span><span>3× 分离</span></div>
+    </div>
+  </aside>
+</main>
+<div id="toast" role="status" class="toast"></div>
+<script type="module" src="./src/app.js"></script>
+</body>
+</html>
